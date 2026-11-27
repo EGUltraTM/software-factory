@@ -30,8 +30,9 @@ export type Config = {
   factoryRepo?: string;
   /** Verbesserungs-Lauf automatisch alle X Tage (zusätzlich zu `factory-improve`). Standard: aus */
   improve?: { everyDays?: number };
-  /** Vorschau pro PR mit Passwortschutz (Nutzer "factory"). Mit domain über HTTPS, sonst http://<host>:<4000+slot> */
-  preview?: { host: string; domain?: string; password: string; max?: number; memory?: string };
+  /** Vorschau pro PR mit Passwortschutz (Nutzer "factory"). Mit domain über HTTPS, sonst http://<host>:<portBase+slot>.
+   *  portBase: erster Port von außen (Standard 4000, also 4001, 4002 …); die App dahinter lauscht lokal auf portBase+1000+slot. */
+  preview?: { host: string; domain?: string; password: string; max?: number; memory?: string; portBase?: number };
 };
 
 type Comment = { author: { login: string } | null; body: string; createdAt: string };
@@ -470,8 +471,10 @@ async function finish(cfg: Config, c: Container, reason?: string) {
 // ---------- Vorschau pro Pull Request (optional) ----------
 
 const CADDYFILE = "/etc/software-factory/Caddyfile";
-const PREVIEW_PORT = (slot: number) => 4000 + slot; // von außen erreichbar (mit Passwort)
-const INTERNAL_PORT = (slot: number) => 5000 + slot; // nur lokal, dahinter läuft die App
+export const DEFAULT_PORT_BASE = 4000;
+const portBase = (cfg: Config) => cfg.preview?.portBase ?? DEFAULT_PORT_BASE;
+export const PREVIEW_PORT = (cfg: Config, slot: number) => portBase(cfg) + slot; // von außen erreichbar (mit Passwort)
+export const INTERNAL_PORT = (cfg: Config, slot: number) => portBase(cfg) + 1000 + slot; // nur lokal, dahinter läuft die App
 let caddyHash: string | null = null;
 let caddyFresh = false; // Caddy einmal pro Runner-Start neu aufsetzen (Konfiguration kann sich geändert haben)
 const previewNoticePosted = new Set<string>();
@@ -490,14 +493,14 @@ async function listPreviews(): Promise<Preview[]> {
 }
 
 export const previewLink = (cfg: Config, slot: number) =>
-  cfg.preview?.domain ? `https://${cfg.preview.domain}:${PREVIEW_PORT(slot)}` : `http://${cfg.preview?.host}:${PREVIEW_PORT(slot)}`;
+  cfg.preview?.domain ? `https://${cfg.preview.domain}:${PREVIEW_PORT(cfg, slot)}` : `http://${cfg.preview?.host}:${PREVIEW_PORT(cfg, slot)}`;
 
 export function caddyConfig(cfg: Config, slots: number[], hash: string): string {
   const domain = cfg.preview?.domain;
   // Mit Domain holt Caddy selbst ein Zertifikat (Ports 80 und 443 müssen erreichbar sein). Ohne Domain nur HTTP.
   const global = domain ? `{\n  admin localhost:2019\n}` : `{\n  auto_https off\n  admin localhost:2019\n}`;
   const blocks = slots.map((slot) =>
-    `${domain ? `${domain}:${PREVIEW_PORT(slot)}` : `:${PREVIEW_PORT(slot)}`} {\n  basic_auth {\n    factory ${hash}\n  }\n  reverse_proxy 127.0.0.1:${INTERNAL_PORT(slot)}\n}`);
+    `${domain ? `${domain}:${PREVIEW_PORT(cfg, slot)}` : `:${PREVIEW_PORT(cfg, slot)}`} {\n  basic_auth {\n    factory ${hash}\n  }\n  reverse_proxy 127.0.0.1:${INTERNAL_PORT(cfg, slot)}\n}`);
   if (domain) blocks.unshift(`${domain} {\n  respond "Software Factory: Vorschauen laufen auf eigenen Ports." 200\n}`);
   return `${global}\n\n${blocks.join("\n\n")}\n`;
 }
@@ -568,7 +571,7 @@ async function syncPreviews(cfg: Config, repo: string, issues: Issue[]) {
     await docker(["run", "-d", "--name", name,
       "--label", "sf.preview=1", "--label", `sf.repo=${repo}`, "--label", `sf.issue=${issueNr}`,
       "--label", `sf.sha=${pr.sha}`, "--label", `sf.slot=${slot}`,
-      "-p", `127.0.0.1:${INTERNAL_PORT(slot)}:3000`,
+      "-p", `127.0.0.1:${INTERNAL_PORT(cfg, slot)}:3000`,
       "--memory", cfg.preview.memory ?? "1500m", "--pids-limit", "2048",
       "-v", `${src}/app:/app`, "--entrypoint", "/factory/preview.sh", image]);
     changed = true;

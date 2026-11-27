@@ -285,6 +285,9 @@ Der Standard `maxParallel: 2` passt zum KVM 2: zwei Läufe mit je bis zu 3 GB pl
   ufw allow OpenSSH
   ufw allow 80,443/tcp      # nur nötig mit HTTPS-Vorschau (Zertifikat)
   ufw allow 4001:4003/tcp
+  ```
+  Sind die Ports 4001… auf deinem Server schon belegt (`ss -tlnp | grep :400`), setz in `/etc/software-factory/config.json` unter `preview` ein anderes `portBase`, z. B. `4100`: Die Vorschauen liegen dann auf 4101, 4102 …, die Apps dahinter lokal auf 5101, 5102 …
+  ```bash
   ufw enable
   ```
 

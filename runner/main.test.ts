@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync, lstat
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  buildPrompt, caddyConfig, humanCommentsSinceFactory, lastFactoryMarker, readJobFile, redact,
+  buildPrompt, caddyConfig, previewLink, humanCommentsSinceFactory, lastFactoryMarker, readJobFile, redact,
   reworksSinceApproval, setFactoryLogin, writeJobFile, type Config,
 } from "./main.ts";
 
@@ -106,6 +106,17 @@ test("Caddy: mit Domain HTTPS, ohne Domain nur HTTP", () => {
   const plain = caddyConfig(cfg({ preview: { host: "1.2.3.4", password: "x" } }), [1], "HASH");
   assert.ok(plain.includes("auto_https off"));
   assert.ok(plain.includes(":4001 {"));
+  assert.ok(plain.includes("reverse_proxy 127.0.0.1:5001"));
+});
+
+test("Vorschau: portBase verschiebt Außen- und Innenport, Standard 4000/5000", () => {
+  const c = cfg({ preview: { host: "1.2.3.4", password: "x", portBase: 4100 } });
+  assert.equal(previewLink(c, 2), "http://1.2.3.4:4102");
+  const caddy = caddyConfig(c, [1, 2], "HASH");
+  assert.ok(caddy.includes(":4101 {") && caddy.includes(":4102 {"));
+  assert.ok(caddy.includes("reverse_proxy 127.0.0.1:5101") && caddy.includes("reverse_proxy 127.0.0.1:5102"));
+  assert.ok(!caddy.includes(":4001"));
+  assert.equal(previewLink(cfg({ preview: { host: "1.2.3.4", password: "x" } }), 1), "http://1.2.3.4:4001");
 });
 
 // ---------- factory-verify ----------

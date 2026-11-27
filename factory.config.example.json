@@ -14,7 +14,8 @@
     "host": "AUTO",
     "domain": "",
     "password": "AUTO",
-    "max": 1
+    "max": 1,
+    "portBase": 4000
   },
   "factoryRepo": "AUTO",
   "improve": {
