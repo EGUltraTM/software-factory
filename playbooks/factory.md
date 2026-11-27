@@ -67,6 +67,7 @@ Danach beendest du die Arbeit.
 3. **Tests:** `factory-report verifying "..."`
    - Skill `qa` → `qa-report.md` im Feature-Ordner (beim Bug: Ergebnis in den PR).
    - Bei sichtbaren Änderungen: Dev-Server starten (`.factory/setup.json` → `dev`), Screenshots mit `factory-screenshot`.
+   - **Oberflächen-Review:** Sobald der Branch Oberflächen-Dateien ändert (tsx/jsx/astro/css/html, Payload-Admin-Komponenten), läuft der Skill `pionea-review` als Teil von `qa`. Jeder Fund wird behoben und committet, auch kleine, bevor `factory-verify` läuft. Der Abschnitt „Oberflächen-Review“ mit der Tabelle Fund / Schwere / Stelle / Behebung gehört in `qa-report.md` und in den PR-Text. Ohne Oberflächen-Änderung steht an beiden Stellen ausdrücklich: „Oberflächen-Review: entfällt, es wurden keine Oberflächen-Dateien geändert.“
    - Committen, pushen, dann `factory-verify`. Schlägt etwas fehl: zurück zur Umsetzung (maximal drei Runden). Bleibt es rot: `factory-report failed "<was nicht grün wird und warum>"`.
 4. **Pull Request** gegen den Standard-Branch: `gh pr create --base "$FACTORY_DEFAULT_BRANCH" --head <branch> --title "<Typ>(<PROJ-ID oder #nummer>): <Titel>" --body-file <datei>`
    Der PR-Text enthält in dieser Reihenfolge:
@@ -76,8 +77,9 @@ Danach beendest du die Arbeit.
    4. **Akzeptanzkriterien** aus der Spec, jedes mit Ergebnis (✅ / ❌)
    5. **Annahmen, die ich getroffen habe** (eine pro Zeile, oder „keine")
    6. **Checks** (Inhalt aus `/work/verify.md`)
-   7. **Screenshots** (Ausgabe von `factory-screenshot`), falls es sichtbare Änderungen gibt
-   8. **Einschätzung**: `Sicher` oder `Bitte genau prüfen` mit Begründung in 1–2 Sätzen
+   7. **Oberflächen-Review** (Abschnitt aus dem Skill `pionea-review` mit der Tabelle Fund / Schwere / Stelle / Behebung, oder die Zeile, dass er entfällt)
+   8. **Screenshots** (Ausgabe von `factory-screenshot`), falls es sichtbare Änderungen gibt
+   9. **Einschätzung**: `Sicher` oder `Bitte genau prüfen` mit Begründung in 1–2 Sätzen
 5. `factory-report built "<Zusammenfassung in 1–2 Sätzen>" --pr <url>` und beenden. Danach prüft ein unabhängiger Agent dein Ergebnis.
    Der Runner übernimmt `built` nur, wenn `factory-verify` grün war **auf genau dem gepushten Commit** und der PR die Spec nicht verändert. Nach jedem weiteren Commit also erneut `factory-verify`.
 
@@ -97,12 +99,15 @@ Zwischenstände meldest du in dieser Phase nicht. Am Ende meldest du genau einma
 2. Du bist auf dem Branch des Pull Requests. Führe `factory-verify` aus.
 3. Starte die App (`.factory/setup.json` → `dev`) auf einem freien Port und teste **jedes Szenario selbst im Browser** (Playwright-Skript mit Node, Chromium ist installiert). Halte wichtige Zustände mit `factory-screenshot` fest.
 4. Prüfe zusätzlich kurz auf Offensichtliches: Konsolenfehler, kaputte Darstellung auf 375px, Eingaben, die die App zum Absturz bringen.
-5. Schreibe den **Abnahmebericht** in eine Datei: pro Szenario ✅ / ❌ mit einem Satz Begründung, gefundene Probleme mit Schritten zum Nachstellen, Checks, Screenshots.
-6. Entscheidung:
-   - **Alle Szenarien bestanden, keine schweren Probleme** → `factory-report accepted "<1–2 Sätze>" --pr <url> --body-file <bericht>`
-   - **Szenario nicht bestanden oder schweres Problem** → `factory-report rework "<1–2 Sätze>" --body-file <befunde>`. Die Befunde müssen ohne Rückfrage verständlich und nachstellbar sein.
+5. Prüfe den Abschnitt **„Oberflächen-Review“** im PR-Text. Ermittle selbst, ob der Branch Oberflächen-Dateien ändert (`git diff --name-only "origin/$FACTORY_DEFAULT_BRANCH"...HEAD`, Muster: tsx/jsx/astro/css/html, Payload-Admin-Komponenten).
+   - Oberflächen-Dateien geändert: Der Abschnitt muss vorhanden sein, die Abdeckung A bis G nennen und eine Tabelle Fund / Schwere / Stelle / Behebung enthalten, in der jeder Fund einen Commit trägt. Stichprobe: Mindestens zwei genannte Behebungen im Diff nachsehen. Fehlt der Abschnitt, fehlt ein Commit, behauptet er „entfällt“ oder stehen Behebungen drin, die der Diff nicht enthält, ist das ein Befund für `rework`.
+   - Keine Oberflächen-Dateien geändert: Die Zeile „Oberflächen-Review: entfällt …“ muss stehen. Fehlt sie, vermerke das im Bericht; allein ist das kein Grund für `rework`.
+6. Schreibe den **Abnahmebericht** in eine Datei: pro Szenario ✅ / ❌ mit einem Satz Begründung, gefundene Probleme mit Schritten zum Nachstellen, Checks, Ergebnis der Prüfung des Oberflächen-Reviews, Screenshots.
+7. Entscheidung:
+   - **Alle Szenarien bestanden, keine schweren Probleme, Oberflächen-Review vorhanden und plausibel** → `factory-report accepted "<1–2 Sätze>" --pr <url> --body-file <bericht>`
+   - **Szenario nicht bestanden, schweres Problem oder Oberflächen-Review fehlt bzw. unplausibel** → `factory-report rework "<1–2 Sätze>" --body-file <befunde>`. Die Befunde müssen ohne Rückfrage verständlich und nachstellbar sein.
    - **Letzte Runde** (steht in der ersten Nachricht): keine Rückgabe mehr. Bestanden → `accepted`. Nicht bestanden → `factory-report unresolved "<1–2 Sätze>" --pr <url> --body-file <bericht>`. Dann entscheidet der Mensch. **Nie `accepted` melden, wenn ein Szenario nicht bestanden ist.**
-7. Beenden.
+8. Beenden.
 
 ## Wiederaufnahme
 

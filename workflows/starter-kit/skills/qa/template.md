@@ -24,5 +24,28 @@
 ## Automatisierte Tests
 - Unit: … · E2E: …
 
+## Oberflächen-Review
+<!-- Pflicht. Entweder der Abschnitt aus dem Skill pionea-review oder genau diese Zeile: -->
+<!-- Oberflächen-Review: entfällt, es wurden keine Oberflächen-Dateien geändert. -->
+
+**Geltungsbereich:** geprüfte Dateien, Oberflächen und Verwender · nicht geprüfte Verwender: n
+
+| Bereich | Ergebnis | Nachweis |
+| --- | --- | --- |
+| A Barrierefreiheit | Geprüft | Prüfskript `/work/review-<name>.json`, Tab-Durchgang |
+| B Layout und Abstände | Geprüft | Screenshots 375 px / 1440 px |
+| C Typografie | Geprüft | … |
+| D Farben und Kontrast | Geprüft | Prüfskript, Paare gemessen |
+| E Texte | Geprüft | Begriffsinventar, Diff gelesen |
+| F Zustände | Geprüft | leer / laden / fehler / lang / 375 px gerendert |
+| G Kaputtmach-Versuche | Geprüft | Worst-Case-Fixture `…` |
+
+| Fund | Schwere | Stelle | Behebung |
+| --- | --- | --- | --- |
+| … | Hoch / Mittel / Niedrig | `pfad/datei.tsx:zeile` | …, Commit `<sha>` |
+
+**Annahmen:** … (oder „keine“)
+**Außerhalb des Auftrags:** … (höchstens drei, nicht behoben; Abschnitt entfällt, wenn leer)
+
 ## Screenshots
 ![…](…)

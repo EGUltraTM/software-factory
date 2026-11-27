@@ -33,10 +33,11 @@ features/
 - **Bau** (startet automatisch, sobald ein Platz frei ist)
   - Schritt **Architektur** → Skill `architecture` → `design.md` (Bug: reproduzieren, roter Test)
   - Schritt **Umsetzung** → Skill `build` (Bug: Fix)
-  - Schritt **Tests** → Skill `qa` → `qa-report.md`
+  - Schritt **Tests** → Skill `qa` → `qa-report.md`. Bei Änderungen an Oberflächen-Dateien (tsx/jsx/astro/css/html, Payload-Admin-Komponenten) ist darin der Skill `pionea-review` Pflicht: Layout, Typografie, Farben und Kontrast, Barrierefreiheit, Texte, Zustände und Kaputtmach-Versuche mit Extremdaten. Jeder Fund wird vor `factory-verify` behoben, auch kleine. `qa-report.md` und PR bekommen den Abschnitt „Oberflächen-Review“ mit der Tabelle Fund / Schwere / Stelle / Behebung. Ohne Oberflächen-Änderung steht dort ausdrücklich, dass das Review entfällt.
   - Ergebnis: Pull Request → **Abnahme**
 - **Abnahme** (eigener Lauf, neuer Agent, entwickelt nichts)
   - Kennt nur Spec, Testszenarien und den PR-Branch. Startet die App und testet jedes Szenario im Browser.
+  - Prüft, ob der Abschnitt „Oberflächen-Review“ im PR vorhanden und plausibel ist: Bei geänderten Oberflächen-Dateien muss er die Tabelle mit Commit je Fund enthalten, und die genannten Behebungen müssen im Diff stehen. Fehlt er oder behauptet er „entfällt“, obwohl Oberflächen-Dateien geändert wurden, ist das ein Befund.
   - Bestanden → **Review**. Nicht bestanden → Befunde zurück in die Entwicklung (max. 2 Runden, danach Review mit „Bitte genau prüfen")
 
 ## Status auf dem Board
