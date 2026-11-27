@@ -32,7 +32,9 @@ export type Config = {
   improve?: { everyDays?: number };
   /** Vorschau pro PR mit Passwortschutz (Nutzer "factory"). Mit domain über HTTPS, sonst http://<host>:<portBase+slot>.
    *  portBase: erster Port von außen (Standard 4000, also 4001, 4002 …); die App dahinter lauscht lokal auf portBase+1000+slot. */
-  preview?: { host: string; domain?: string; password: string; max?: number; memory?: string; portBase?: number };
+  preview?: { host: string; domain?: string; password: string; max?: number; memory?: string; portBase?: number;
+    /** Repos ohne Vorschau (z. B. Bibliotheken, die allein nicht laufen) */
+    skip?: string[] };
 };
 
 type Comment = { author: { login: string } | null; body: string; createdAt: string };
@@ -524,8 +526,12 @@ async function writeCaddy(cfg: Config, previews: Preview[]) {
 const previewDir = (cfg: Config, name: string) => join(cfg.dataDir, "previews", name);
 
 /** Startet/aktualisiert Vorschauen für offene Factory-PRs und räumt alte weg. */
+/** Vorschau für dieses Repo vorgesehen? Nicht für Repos unter preview.skip. */
+export const previewEnabled = (cfg: Config, repo: string) =>
+  !!cfg.preview && !(cfg.preview.skip ?? []).some((r) => r.toLowerCase() === repo.toLowerCase());
+
 async function syncPreviews(cfg: Config, repo: string, issues: Issue[]) {
-  if (!cfg.preview) return;
+  if (!previewEnabled(cfg, repo)) return;
   const max = cfg.preview.max ?? 1;
   let previews = (await listPreviews()).filter((p) => p.repo === repo);
   const wanted = new Map<number, { url: string; number: number; sha: string }>();
@@ -565,13 +571,14 @@ async function syncPreviews(cfg: Config, repo: string, issues: Issue[]) {
     const ghToken = (await gh(["auth", "token"])).trim();
     await docker(["run", "--rm", "-e", `REPO=${repo}`, "-e", `BRANCH=factory/${issueNr}`, "-e", "GH_TOKEN",
       "-v", `${src}:/src`, "--entrypoint", "bash", image, "-c",
-      `gh auth setup-git >/dev/null && gh repo clone "$REPO" /src/app -- --quiet --depth 1 --branch "$BRANCH"`], { GH_TOKEN: ghToken });
+      `gh auth setup-git >/dev/null && gh repo clone "$REPO" /src/app -- --quiet --depth 1 --recurse-submodules --shallow-submodules --branch "$BRANCH"`], { GH_TOKEN: ghToken });
 
     // 2. … und die App ohne jegliche Zugangsdaten starten
     await docker(["run", "-d", "--name", name,
       "--label", "sf.preview=1", "--label", `sf.repo=${repo}`, "--label", `sf.issue=${issueNr}`,
       "--label", `sf.sha=${pr.sha}`, "--label", `sf.slot=${slot}`,
       "-p", `127.0.0.1:${INTERNAL_PORT(cfg, slot)}:3000`,
+      "-e", `PREVIEW_URL=${previewLink(cfg, slot)}`, // Adresse, unter der die App später erreichbar ist (für absolute Links, Cookies)
       "--memory", cfg.preview.memory ?? "1500m", "--pids-limit", "2048",
       "-v", `${src}/app:/app`, "--entrypoint", "/factory/preview.sh", image]);
     changed = true;

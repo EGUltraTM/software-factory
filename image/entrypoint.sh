@@ -39,6 +39,11 @@ if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
 else
   git checkout --quiet -B "$BRANCH" "origin/$DEFAULT_BRANCH"
 fi
+# Git-Untermodule (z. B. gemeinsame Bausteine) auf den Stand des Branches bringen
+if [ -f .gitmodules ]; then
+  log "Untermodule holen"
+  git submodule update --init --recursive --quiet || log "Untermodule konnten nicht geholt werden, der Agent kümmert sich"
+fi
 
 # Abhängigkeiten installieren (zum Entwickeln und für die Abnahme nötig)
 if [ "$PHASE" != "check" ] && [ -f .factory/setup.json ]; then

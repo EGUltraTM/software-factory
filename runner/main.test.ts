@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync, lstat
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  buildPrompt, caddyConfig, previewLink, humanCommentsSinceFactory, lastFactoryMarker, readJobFile, redact,
+  buildPrompt, caddyConfig, previewLink, previewEnabled, humanCommentsSinceFactory, lastFactoryMarker, readJobFile, redact,
   reworksSinceApproval, setFactoryLogin, writeJobFile, type Config,
 } from "./main.ts";
 
@@ -117,6 +117,13 @@ test("Vorschau: portBase verschiebt Außen- und Innenport, Standard 4000/5000", 
   assert.ok(caddy.includes("reverse_proxy 127.0.0.1:5101") && caddy.includes("reverse_proxy 127.0.0.1:5102"));
   assert.ok(!caddy.includes(":4001"));
   assert.equal(previewLink(cfg({ preview: { host: "1.2.3.4", password: "x" } }), 1), "http://1.2.3.4:4001");
+});
+
+test("Vorschau: preview.skip schaltet sie je Repo ab", () => {
+  const c = cfg({ preview: { host: "1.2.3.4", password: "x", skip: ["a/lib"] } });
+  assert.equal(previewEnabled(c, "a/app"), true);
+  assert.equal(previewEnabled(c, "A/Lib"), false);
+  assert.equal(previewEnabled(cfg({}), "a/app"), false);
 });
 
 // ---------- factory-verify ----------

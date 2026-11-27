@@ -102,7 +102,7 @@ Die Factory liest `.factory/setup.json` im Ziel-Repo:
 }
 ```
 
-`/init` legt sie passend zum Stack an. Braucht dein Stack eine andere Laufzeit als Node oder Python, ergänzt `/init` eine `.factory/Dockerfile`, die auf dem Factory-Image aufbaut.
+`/init` legt sie passend zum Stack an. Der `preview`-Befehl bekommt in `PREVIEW_URL` die Adresse, unter der die Vorschau erreichbar ist. Braucht dein Stack eine andere Laufzeit als Node oder Python, ergänzt `/init` eine `.factory/Dockerfile`, die auf dem Factory-Image aufbaut.
 
 ## Claude-Abo: was ist erlaubt?
 
@@ -117,7 +117,7 @@ Die Factory startet die **unveränderte, offizielle Claude Code CLI** auf deinem
 - Jeder Lauf hat einen eigenen Container mit Speicher- und Prozesslimit. Standard: zwei Agent-Läufe gleichzeitig (`maxParallel: 2`), passend zu 8 GB RAM.
 - Antworten und Änderungswünsche nimmt die Factory nur von dir an (plus `allowedUsers`). Fremde Kommentare sieht der Agent nicht.
 - Ein Bau zählt nur, wenn `factory-verify` auf genau dem gepushten Commit grün ist und die Spec unverändert bleibt. Besteht die Abnahme nach zwei Runden nicht, landet der PR mit „Abnahme nicht bestanden“ bei dir, nie als bestanden.
-- Vorschauen laufen ohne Zugangsdaten, mit Passwort und mit Domain über HTTPS.
+- Vorschauen laufen ohne Zugangsdaten, mit Passwort und mit Domain über HTTPS. Repos ohne lauffähige App (Bibliotheken) stehen unter `preview.skip`. Git-Untermodule werden mitgeholt.
 - Die Agents arbeiten mit deinem GitHub-Login. Für mehr Trennung: eigener GitHub-Account für die Factory oder ein Fine-grained Token, der nur deine Factory-Repos erreicht.
 - Getestet: Ubuntu 24.04 auf Hostinger KVM 2, Next.js-Projekte. Weitere Stacks sind vorgesehen, aber noch nicht erprobt.
 

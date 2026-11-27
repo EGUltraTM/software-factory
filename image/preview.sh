@@ -10,6 +10,8 @@ PREVIEW=$(jq -r '.preview // empty' .factory/setup.json 2>/dev/null || true)
 INSTALL="${INSTALL:-npm ci}"
 PREVIEW="${PREVIEW:-npm run build && npm run start -- -p \$PORT -H 0.0.0.0}"
 export PORT=3000
+# PREVIEW_URL (vom Runner gesetzt): Adresse, unter der diese Vorschau von außen erreichbar ist.
+# Apps, die ihre eigene Adresse kennen müssen, lesen sie in ihrem preview-Befehl aus (z. B. SERVER_URL=$PREVIEW_URL).
 
 echo "[preview] Installation: $INSTALL"
 bash -lc "$INSTALL"

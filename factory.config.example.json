@@ -15,7 +15,8 @@
     "domain": "",
     "password": "AUTO",
     "max": 1,
-    "portBase": 4000
+    "portBase": 4000,
+    "skip": []
   },
   "factoryRepo": "AUTO",
   "improve": {
